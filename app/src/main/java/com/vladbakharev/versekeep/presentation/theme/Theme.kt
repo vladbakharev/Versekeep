@@ -21,11 +21,11 @@ private val VersekeepColors =
 
 private val VersekeepShapes =
     Shapes(
-        extraSmall = RoundedCornerShape(16.dp),
-        small = RoundedCornerShape(16.dp),
-        medium = RoundedCornerShape(16.dp),
-        large = RoundedCornerShape(16.dp),
-        extraLarge = RoundedCornerShape(16.dp),
+        extraSmall = RoundedCornerShape(32.dp),
+        small = RoundedCornerShape(32.dp),
+        medium = RoundedCornerShape(32.dp),
+        large = RoundedCornerShape(32.dp),
+        extraLarge = RoundedCornerShape(32.dp),
     )
 
 @Composable

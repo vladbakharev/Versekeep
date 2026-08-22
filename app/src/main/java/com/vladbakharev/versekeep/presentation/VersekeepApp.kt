@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -35,6 +36,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
+import com.vladbakharev.versekeep.R
 import com.vladbakharev.versekeep.presentation.navigation.Screen
 import com.vladbakharev.versekeep.presentation.screen.FavoritesScreen
 import com.vladbakharev.versekeep.presentation.screen.HomeScreen
@@ -69,9 +71,9 @@ fun VersekeepApp(
                     modifier = Modifier
                         .fillMaxWidth()
                         .navigationBarsPadding()
-                        .padding(horizontal = 32.dp, vertical = 6.dp)
-                        .shadow(8.dp, RoundedCornerShape(16.dp), clip = false),
-                    shape = RoundedCornerShape(16.dp),
+                        .padding(horizontal = 64.dp, vertical = 6.dp)
+                        .shadow(8.dp, RoundedCornerShape(32.dp), clip = false),
+                    shape = RoundedCornerShape(32.dp),
                     color = MaterialTheme.colorScheme.surface,
                 ) {
                     NavigationBar(
@@ -81,9 +83,9 @@ fun VersekeepApp(
                         windowInsets = WindowInsets(0, 0, 0, 0),
                     ) {
                         listOf(
-                            Triple("Home", Icons.Default.Home, Screen.HOME),
-                            Triple("Library", Icons.AutoMirrored.Filled.MenuBook, Screen.LIBRARY),
-                            Triple("Favorites", Icons.Default.Favorite, Screen.FAVORITES),
+                            Triple(stringResource(R.string.nav_home), Icons.Default.Home, Screen.HOME),
+                            Triple(stringResource(R.string.nav_library), Icons.AutoMirrored.Filled.MenuBook, Screen.LIBRARY),
+                            Triple(stringResource(R.string.nav_favorites), Icons.Default.Favorite, Screen.FAVORITES),
                         ).forEach { (label, icon, route) ->
                             NavigationBarItem(
                                 modifier = Modifier.offset(y = 4.dp),
@@ -106,16 +108,20 @@ fun VersekeepApp(
             if (isRoot) {
                 FloatingActionButton(
                     onClick = { navController.navigate(Screen.editor()) },
-                    shape = RoundedCornerShape(16.dp),
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.surface,
+                    shape = RoundedCornerShape(32.dp),
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.primary,
                 ) {
-                    Icon(Icons.Default.Add, contentDescription = "Add poem")
+                    Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_poem))
                 }
             }
         },
     ) { padding ->
-        Box(Modifier.padding(padding).fillMaxSize()) {
+        Box(
+            Modifier
+                .padding(top = padding.calculateTopPadding())
+                .fillMaxSize(),
+        ) {
             NavHost(navController = navController, startDestination = Screen.HOME) {
                 composable(Screen.HOME) {
                     HomeScreen(
