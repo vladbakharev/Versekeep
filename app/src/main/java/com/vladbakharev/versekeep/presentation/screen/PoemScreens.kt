@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -32,11 +33,20 @@ import com.vladbakharev.versekeep.presentation.theme.VersekeepTheme
 private val ClashGroteskSemiBold =
     FontFamily(Font(R.font.clashgrotesk_semibold, weight = FontWeight.SemiBold))
 
-private val ClashGroteskMedium =
-    FontFamily(Font(R.font.clashgrotesk_medium, weight = FontWeight.Medium))
+private val CormorantGaramond =
+    FontFamily(Font(R.font.cormorant_garamond, weight = FontWeight.Medium))
 
-private val ClashGroteskRegular =
-    FontFamily(Font(R.font.clashgrotesk_regular, weight = FontWeight.Normal))
+private val CormorantGaramondItalic =
+    FontFamily(
+        Font(
+            R.font.cormorant_garamond_italic,
+            weight = FontWeight.Normal,
+            style = FontStyle.Italic,
+        ),
+    )
+
+private val GnuTypewriter =
+    FontFamily(Font(R.font.gnu_typewriter, weight = FontWeight.Normal))
 
 @Composable
 private fun ScreenTitle(text: String) {
@@ -302,6 +312,7 @@ private fun PoemList(
     contentPadding: PaddingValues = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
 ) {
     LazyColumn(
+        modifier = Modifier.fillMaxSize(),
         contentPadding = contentPadding,
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -312,6 +323,9 @@ private fun PoemList(
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.background,
                 ),
+                elevation = CardDefaults.cardElevation(
+                    defaultElevation = 8.dp,
+                ),
             ) {
                 Column(Modifier.padding(18.dp)) {
                     Row(verticalAlignment = Alignment.Top) {
@@ -319,16 +333,18 @@ private fun PoemList(
                             Text(
                                 poem.title,
                                 style = MaterialTheme.typography.titleLarge,
-                                fontSize = 20.textSp,
-                                fontFamily = ClashGroteskMedium,
-                                fontWeight = FontWeight.Medium,
+                                fontSize = 22.textSp,
+                                fontFamily = CormorantGaramond,
+                                fontWeight = FontWeight.Bold,
                             )
                             Text(
                                 listOfNotNull(poem.author, poem.year?.toString()).joinToString(
                                     stringResource(R.string.poem_metadata_separator)
                                 ),
-                                fontFamily = ClashGroteskRegular,
-                                fontWeight = FontWeight.Normal,
+                                fontSize = 18.textSp,
+                                fontFamily = CormorantGaramondItalic,
+                                fontWeight = FontWeight.Bold,
+                                fontStyle = FontStyle.Italic,
                                 color = MaterialTheme.colorScheme.primary,
                             )
                         }
@@ -346,11 +362,20 @@ private fun PoemList(
                         maxLines = 3,
                         overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.bodyLarge,
-                        fontSize = 14.textSp,
-                        fontFamily = FontFamily.Serif,
+                        fontSize = 16.textSp,
+                        fontFamily = GnuTypewriter,
+                        letterSpacing = (-1).textSp,
+                        lineHeight = 18.textSp,
                     )
                 }
             }
+        }
+        item(key = "bottom_bar_spacer") {
+            Spacer(
+                Modifier
+                    .height(72.dp)
+                    .navigationBarsPadding(),
+            )
         }
     }
 }
@@ -396,17 +421,26 @@ fun PoemDetailsScreen(
             Text(
                 poem.title,
                 style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Bold
+                fontFamily = CormorantGaramond,
+                fontWeight = FontWeight.Bold,
             )
             Spacer(Modifier.height(8.dp))
             Text(
                 poem.author,
                 style = MaterialTheme.typography.titleLarge,
+                fontSize = 24.textSp,
+                fontFamily = CormorantGaramondItalic,
+                fontWeight = FontWeight.Bold,
+                fontStyle = FontStyle.Italic,
                 color = MaterialTheme.colorScheme.primary
             )
             poem.year?.let {
                 Text(
                     it.toString(),
+                    fontSize = 18.textSp,
+                    fontFamily = CormorantGaramondItalic,
+                    fontWeight = FontWeight.Bold,
+                    fontStyle = FontStyle.Italic,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -414,8 +448,10 @@ fun PoemDetailsScreen(
             Text(
                 poem.content,
                 style = MaterialTheme.typography.bodyLarge,
-                fontFamily = FontFamily.Serif,
-                lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.35f,
+                fontSize = 18.textSp,
+                fontFamily = GnuTypewriter,
+                letterSpacing = (-1).textSp,
+                lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.25f,
             )
         }
     }
