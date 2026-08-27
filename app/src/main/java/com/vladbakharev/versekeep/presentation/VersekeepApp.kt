@@ -1,33 +1,40 @@
 package com.vladbakharev.versekeep.presentation
 
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Home
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
@@ -43,6 +50,14 @@ import com.vladbakharev.versekeep.presentation.screen.HomeScreen
 import com.vladbakharev.versekeep.presentation.screen.LibraryScreen
 import com.vladbakharev.versekeep.presentation.screen.PoemDetailsScreen
 import com.vladbakharev.versekeep.presentation.screen.PoemEditorScreen
+import com.vladbakharev.versekeep.presentation.screen.ProfileScreen
+import com.vladbakharev.versekeep.presentation.theme.VersekeepGray
+
+private data class BottomNavItem(
+    val label: String,
+    val route: String,
+    @param:DrawableRes val drawableRes: Int,
+)
 
 @Composable
 fun VersekeepApp(
@@ -54,7 +69,7 @@ fun VersekeepApp(
     val filter by viewModel.filter.collectAsStateWithLifecycle()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
-    val isRoot = currentRoute in setOf(Screen.HOME, Screen.LIBRARY, Screen.FAVORITES)
+    val isRoot = currentRoute in setOf(Screen.HOME, Screen.LIBRARY, Screen.FAVORITES, Screen.PROFILE)
 
     fun navigateToRoot(route: String) {
         navController.navigate(route) {
@@ -71,7 +86,7 @@ fun VersekeepApp(
                     modifier = Modifier
                         .fillMaxWidth()
                         .navigationBarsPadding()
-                        .padding(horizontal = 64.dp, vertical = 6.dp)
+                        .padding(horizontal = 32.dp, vertical = 6.dp)
                         .shadow(8.dp, RoundedCornerShape(32.dp), clip = false),
                     shape = RoundedCornerShape(32.dp),
                     color = MaterialTheme.colorScheme.surface,
@@ -83,34 +98,79 @@ fun VersekeepApp(
                         windowInsets = WindowInsets(0, 0, 0, 0),
                     ) {
                         listOf(
-                            Triple(stringResource(R.string.nav_home), Icons.Default.Home, Screen.HOME),
-                            Triple(stringResource(R.string.nav_library), Icons.AutoMirrored.Filled.MenuBook, Screen.LIBRARY),
-                            Triple(stringResource(R.string.nav_favorites), Icons.Default.Favorite, Screen.FAVORITES),
-                        ).forEach { (label, icon, route) ->
-                            NavigationBarItem(
-                                modifier = Modifier.offset(y = 4.dp),
-                                selected = currentRoute == route,
-                                onClick = { navigateToRoot(route) },
-                                icon = { Icon(icon, contentDescription = null) },
-                                label = { Text(label) },
-                                colors = NavigationBarItemDefaults.colors(
-                                    selectedIconColor = MaterialTheme.colorScheme.surface,
-                                    selectedTextColor = MaterialTheme.colorScheme.primary,
-                                    indicatorColor = MaterialTheme.colorScheme.primary,
-                                ),
-                            )
+                            BottomNavItem(
+                                label = stringResource(R.string.nav_home),
+                                route = Screen.HOME,
+                                drawableRes = R.drawable.home_button,
+                            ),
+                            BottomNavItem(
+                                label = stringResource(R.string.nav_library),
+                                route = Screen.LIBRARY,
+                                drawableRes = R.drawable.library_button,
+                            ),
+                            BottomNavItem(
+                                label = stringResource(R.string.nav_favorites),
+                                route = Screen.FAVORITES,
+                                drawableRes = R.drawable.favorites_button,
+                            ),
+                            BottomNavItem(
+                                label = stringResource(R.string.nav_profile),
+                                route = Screen.PROFILE,
+                                drawableRes = R.drawable.profile_button,
+                            ),
+                        ).forEach { item ->
+                            val label = item.label
+                            val route = item.route
+                            val selected = currentRoute == route
+                            val contentColor =
+                                if (selected) MaterialTheme.colorScheme.surface
+                                else VersekeepGray
+                            Column(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight()
+                                    .padding(horizontal = 4.dp, vertical = 4.dp)
+                                    .clip(RoundedCornerShape(32.dp))
+                                    .background(
+                                        if (selected) VersekeepGray
+                                        else Color.Transparent,
+                                    )
+                                    .clickable { navigateToRoot(route) },
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center,
+                            ) {
+                                Icon(
+                                    painter = painterResource(item.drawableRes),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(22.dp),
+                                    tint = contentColor,
+                                )
+                                Text(
+                                    text = label,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = contentColor,
+                                )
+                            }
                         }
                     }
                 }
             }
         },
         floatingActionButton = {
-            if (isRoot) {
+            if (isRoot && currentRoute != Screen.PROFILE) {
                 FloatingActionButton(
                     onClick = { navController.navigate(Screen.editor()) },
+                    modifier = Modifier.padding(end = 8.dp),
                     shape = RoundedCornerShape(32.dp),
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    contentColor = MaterialTheme.colorScheme.primary,
+                    containerColor = VersekeepGray,
+                    contentColor = MaterialTheme.colorScheme.surface,
+                    elevation = FloatingActionButtonDefaults.elevation(
+                        defaultElevation = 8.dp,
+                        pressedElevation = 8.dp,
+                        focusedElevation = 8.dp,
+                        hoveredElevation = 8.dp,
+                    ),
                 ) {
                     Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_poem))
                 }
@@ -145,6 +205,9 @@ fun VersekeepApp(
                         poems = poems.filter { it.isFavorite },
                         onPoem = { navController.navigate(Screen.details(it)) },
                     )
+                }
+                composable(Screen.PROFILE) {
+                    ProfileScreen()
                 }
                 composable(
                     route = Screen.DETAILS,

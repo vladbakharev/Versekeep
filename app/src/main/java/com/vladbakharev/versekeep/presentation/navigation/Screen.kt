@@ -4,6 +4,7 @@ object Screen {
     const val HOME = "home"
     const val LIBRARY = "library"
     const val FAVORITES = "favorites"
+    const val PROFILE = "profile"
     const val DETAILS = "details/{poemId}"
     const val EDITOR = "editor?poemId={poemId}"
 

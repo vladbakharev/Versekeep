@@ -1,8 +1,13 @@
 package com.vladbakharev.versekeep.presentation.screen
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridScope
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -14,6 +19,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -22,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp as textSp
 import com.vladbakharev.versekeep.R
@@ -29,9 +36,6 @@ import com.vladbakharev.versekeep.domain.model.Poem
 import com.vladbakharev.versekeep.domain.model.PoemFilter
 import com.vladbakharev.versekeep.domain.model.PoemSort
 import com.vladbakharev.versekeep.presentation.theme.VersekeepTheme
-
-private val ClashGroteskSemiBold =
-    FontFamily(Font(R.font.clashgrotesk_semibold, weight = FontWeight.SemiBold))
 
 private val CormorantGaramond =
     FontFamily(Font(R.font.cormorant_garamond, weight = FontWeight.Medium))
@@ -49,16 +53,20 @@ private val GnuTypewriter =
     FontFamily(Font(R.font.gnu_typewriter, weight = FontWeight.Normal))
 
 @Composable
-private fun ScreenTitle(text: String) {
+private fun ScreenTitle(
+    text: String,
+    topPadding: Dp = 24.dp,
+) {
     Text(
         text = text,
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(start = 24.dp, end = 24.dp, top = 28.dp, bottom = 16.dp),
+                .padding(start = 24.dp, end = 24.dp, top = topPadding, bottom = 16.dp),
         style = MaterialTheme.typography.headlineLarge,
-        fontFamily = ClashGroteskSemiBold,
-        fontWeight = FontWeight.SemiBold,
+        fontSize = 36.textSp,
+        fontFamily = CormorantGaramond,
+        fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.primary,
         textAlign = TextAlign.Center,
     )
@@ -71,35 +79,36 @@ fun HomeScreen(
     onAdd: () -> Unit,
 ) {
     Column(Modifier.fillMaxSize()) {
-        ScreenTitle(stringResource(R.string.app_name))
-        Surface(
-            modifier = Modifier
+        if (poems.isEmpty()) {
+            ScreenTitle(stringResource(R.string.app_name))
+            Box(Modifier
                 .fillMaxWidth()
-                .weight(1f),
-            shape = RoundedCornerShape(topStart = 48.dp, topEnd = 48.dp),
-            color = MaterialTheme.colorScheme.primary,
-        ) {
-            if (poems.isEmpty()) {
+                .weight(1f)) {
                 EmptyState(
                     Icons.Default.AutoStories,
                     stringResource(R.string.empty_collection_title),
                     stringResource(R.string.empty_collection_body),
                     stringResource(R.string.add_first_poem),
                     onAdd,
-                    onPrimaryBackground = true,
-                )
-            } else {
-                PoemList(
-                    poems = poems,
-                    onPoem = onPoem,
-                    contentPadding = PaddingValues(
-                        start = 20.dp,
-                        top = 16.dp,
-                        end = 20.dp,
-                        bottom = 8.dp,
-                    ),
                 )
             }
+        } else {
+            PoemList(
+                poems = poems,
+                onPoem = onPoem,
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    top = 16.dp,
+                    end = 16.dp,
+                    bottom = 8.dp,
+                ),
+                headerContent = {
+                    item(key = "screen_title", span = { GridItemSpan(maxLineSpan) }) {
+                        ScreenTitle(stringResource(R.string.app_name), topPadding = 8.dp)
+                    }
+                },
+            )
+
         }
     }
 }
@@ -114,72 +123,75 @@ fun LibraryScreen(
     onPoem: (Long) -> Unit,
 ) {
     var filtersOpen by remember { mutableStateOf(false) }
-    Column(Modifier.fillMaxSize()) {
-        ScreenTitle(stringResource(R.string.nav_library))
-        Surface(
-            modifier = Modifier.fillMaxWidth().weight(1f),
-            shape = RoundedCornerShape(topStart = 48.dp, topEnd = 48.dp),
-            color = MaterialTheme.colorScheme.primary,
-        ) {
-            Column(Modifier.fillMaxSize()) {
-                OutlinedTextField(
-                    value = filter.query,
-                    onValueChange = { query -> onFilter { it.copy(query = query) } },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 20.dp, top = 16.dp, end = 20.dp),
-                    placeholder = { Text(stringResource(R.string.search_hint)) },
-                    leadingIcon = { Icon(Icons.Default.Search, null) },
-                    trailingIcon = {
-                        IconButton(onClick = { filtersOpen = true }) {
-                            Icon(Icons.Default.Tune, stringResource(R.string.filters))
-                        }
-                    },
-                    singleLine = true,
-                    shape = RoundedCornerShape(32.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.background,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.background,
-                    ),
-                )
-                val active =
-                    filter.author.isNotBlank() || filter.year != null || filter.sort != PoemSort.RECENT
-                if (active) {
-                    Row(
-                        Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        if (filter.author.isNotBlank()) {
-                            InputChip(
-                                true,
-                                { onFilter { it.copy(author = "") } },
-                                { Text(filter.author) },
-                            )
-                        }
-                        if (filter.year != null) {
-                            InputChip(
-                                true,
-                                { onFilter { it.copy(year = null) } },
-                                { Text(filter.year.toString()) },
-                            )
-                        }
-                        TextButton(onClick = onClear) { Text(stringResource(R.string.clear)) }
-                    }
+    val active =
+        filter.author.isNotBlank() || filter.year != null || filter.sort != PoemSort.RECENT
+
+    @Composable
+    fun LibraryControls(horizontalPadding: Dp) {
+        OutlinedTextField(
+            value = filter.query,
+            onValueChange = { query -> onFilter { it.copy(query = query) } },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = horizontalPadding),
+            placeholder = { Text(stringResource(R.string.search_hint)) },
+            leadingIcon = { Icon(Icons.Default.Search, null) },
+            trailingIcon = {
+                IconButton(onClick = { filtersOpen = true }) {
+                    Icon(Icons.Default.Tune, stringResource(R.string.filters))
                 }
-                Box(Modifier.weight(1f)) {
-                    if (poems.isEmpty()) {
-                        EmptyState(
-                            Icons.Default.SearchOff,
-                            stringResource(R.string.no_poems_found),
-                            stringResource(R.string.no_poems_found_body),
-                            onPrimaryBackground = true,
-                        )
-                    } else {
-                        PoemList(poems, onPoem)
-                    }
+            },
+            singleLine = true,
+            shape = RoundedCornerShape(32.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.background,
+                unfocusedContainerColor = MaterialTheme.colorScheme.background,
+            ),
+        )
+        if (active) {
+            Row(
+                Modifier.padding(horizontal = horizontalPadding, vertical = 10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                if (filter.author.isNotBlank()) {
+                    InputChip(true, { onFilter { it.copy(author = "") } }, { Text(filter.author) })
                 }
+                if (filter.year != null) {
+                    InputChip(
+                        true,
+                        { onFilter { it.copy(year = null) } },
+                        { Text(filter.year.toString()) })
+                }
+                TextButton(onClick = onClear) { Text(stringResource(R.string.clear)) }
             }
         }
+    }
+
+    if (poems.isEmpty()) {
+        Column(Modifier.fillMaxSize()) {
+            ScreenTitle(stringResource(R.string.nav_library))
+            LibraryControls(horizontalPadding = 20.dp)
+            Box(Modifier.weight(1f)) {
+                EmptyState(
+                    Icons.Default.SearchOff,
+                    stringResource(R.string.no_poems_found),
+                    stringResource(R.string.no_poems_found_body),
+                )
+            }
+        }
+    } else {
+        PoemList(
+            poems = poems,
+            onPoem = onPoem,
+            headerContent = {
+                item(key = "screen_title", span = { GridItemSpan(maxLineSpan) }) {
+                    ScreenTitle(stringResource(R.string.nav_library), topPadding = 16.dp)
+                }
+                item(key = "library_controls", span = { GridItemSpan(maxLineSpan) }) {
+                    LibraryControls(horizontalPadding = 0.dp)
+                }
+            },
+        )
     }
     if (filtersOpen) {
         FilterSheet(
@@ -276,93 +288,143 @@ fun FavoritesScreen(
     onPoem: (Long) -> Unit,
 ) {
     Column(Modifier.fillMaxSize()) {
-        ScreenTitle(stringResource(R.string.nav_favorites))
-        Surface(
-            modifier = Modifier.fillMaxWidth().weight(1f),
-            shape = RoundedCornerShape(topStart = 48.dp, topEnd = 48.dp),
-            color = MaterialTheme.colorScheme.primary,
-        ) {
-            if (poems.isEmpty()) {
+        if (poems.isEmpty()) {
+            ScreenTitle(stringResource(R.string.nav_favorites))
+            Box(Modifier
+                .fillMaxWidth()
+                .weight(1f)) {
                 EmptyState(
                     Icons.Default.FavoriteBorder,
                     stringResource(R.string.no_favorites),
                     stringResource(R.string.no_favorites_body),
-                    onPrimaryBackground = true,
-                )
-            } else {
-                PoemList(
-                    poems = poems,
-                    onPoem = onPoem,
-                    contentPadding = PaddingValues(
-                        start = 20.dp,
-                        top = 16.dp,
-                        end = 20.dp,
-                        bottom = 8.dp,
-                    ),
                 )
             }
+        } else {
+            PoemList(
+                poems = poems,
+                onPoem = onPoem,
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    top = 16.dp,
+                    end = 16.dp,
+                    bottom = 8.dp,
+                ),
+                headerContent = {
+                    item(key = "screen_title", span = { GridItemSpan(maxLineSpan) }) {
+                        ScreenTitle(stringResource(R.string.nav_favorites), topPadding = 8.dp)
+                    }
+                },
+            )
         }
     }
 }
 
 @Composable
+fun ProfileScreen() {
+    Column(Modifier.fillMaxSize()) {
+        ScreenTitle(stringResource(R.string.nav_profile))
+    }
+}
+
+@Composable
+@OptIn(ExperimentalFoundationApi::class)
 private fun PoemList(
     poems: List<Poem>,
     onPoem: (Long) -> Unit,
-    contentPadding: PaddingValues = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+    contentPadding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+    headerContent: LazyGridScope.() -> Unit = {},
 ) {
-    LazyColumn(
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
         modifier = Modifier.fillMaxSize(),
         contentPadding = contentPadding,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        items(poems, key = Poem::id) { poem ->
+        headerContent()
+        itemsIndexed(
+            items = poems,
+            key = { _, poem -> poem.id },
+        ) { index, poem ->
+            val positionFromBottom = poems.lastIndex - index
+            val isBlackCard = positionFromBottom % 3 == 0
+            val cardColor =
+                if (isBlackCard) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.background
+            val cardContentColor =
+                if (isBlackCard) MaterialTheme.colorScheme.onPrimary
+                else MaterialTheme.colorScheme.onBackground
             Card(
                 onClick = { onPoem(poem.id) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(0.8f),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.background,
+                    containerColor = cardColor,
+                    contentColor = cardContentColor,
                 ),
                 elevation = CardDefaults.cardElevation(
                     defaultElevation = 8.dp,
                 ),
             ) {
-                Column(Modifier.padding(18.dp)) {
-                    Row(verticalAlignment = Alignment.Top) {
-                        Column(Modifier.weight(1f)) {
-                            Text(
-                                poem.title,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontSize = 22.textSp,
-                                fontFamily = CormorantGaramond,
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Text(
-                                listOfNotNull(poem.author, poem.year?.toString()).joinToString(
-                                    stringResource(R.string.poem_metadata_separator)
-                                ),
-                                fontSize = 18.textSp,
-                                fontFamily = CormorantGaramondItalic,
-                                fontWeight = FontWeight.Bold,
-                                fontStyle = FontStyle.Italic,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                        }
+                Column(
+                    Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.Top,
+                    ) {
+                        Text(
+                            poem.title,
+                            modifier = Modifier
+                                .weight(1f)
+                                .basicMarquee(iterations = Int.MAX_VALUE),
+                            style = MaterialTheme.typography.titleLarge,
+                            fontSize = 20.textSp,
+                            fontFamily = CormorantGaramond,
+                            fontWeight = FontWeight.ExtraBold,
+                            maxLines = 1,
+                            softWrap = false,
+                            overflow = TextOverflow.Clip,
+                        )
                         if (poem.isFavorite) {
                             Icon(
-                                Icons.Default.Favorite,
-                                stringResource(R.string.favorite),
-                                tint = MaterialTheme.colorScheme.tertiary,
+                                painter = painterResource(R.drawable.favorites_button),
+                                contentDescription = stringResource(R.string.favorite),
+                                modifier = Modifier
+                                    .padding(start = 4.dp, top = 4.dp)
+                                    .size(20.dp),
+                                tint = cardContentColor,
                             )
                         }
                     }
-                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        listOfNotNull(poem.author, poem.year?.toString()).joinToString(
+                            stringResource(R.string.poem_metadata_separator)
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .basicMarquee(iterations = Int.MAX_VALUE),
+                        fontSize = 18.textSp,
+                        fontFamily = CormorantGaramondItalic,
+                        fontWeight = FontWeight.Bold,
+                        fontStyle = FontStyle.Italic,
+                        color = cardContentColor,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Clip,
+                    )
+                    Spacer(Modifier.height(8.dp))
                     Text(
                         poem.content,
-                        maxLines = 3,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
                         overflow = TextOverflow.Ellipsis,
                         style = MaterialTheme.typography.bodyLarge,
-                        fontSize = 16.textSp,
+                        fontSize = 14.textSp,
                         fontFamily = GnuTypewriter,
                         letterSpacing = (-1).textSp,
                         lineHeight = 18.textSp,
@@ -370,7 +432,10 @@ private fun PoemList(
                 }
             }
         }
-        item(key = "bottom_bar_spacer") {
+        item(
+            key = "bottom_bar_spacer",
+            span = { GridItemSpan(maxLineSpan) },
+        ) {
             Spacer(
                 Modifier
                     .height(72.dp)
@@ -390,9 +455,11 @@ fun PoemDetailsScreen(
 ) {
     var confirmDelete by remember { mutableStateOf(false) }
     Column(Modifier.fillMaxSize()) {
-        Row(Modifier
-            .fillMaxWidth()
-            .padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(8.dp), verticalAlignment = Alignment.CenterVertically
+        ) {
             IconButton(onClick = onBack) {
                 Icon(
                     Icons.AutoMirrored.Filled.ArrowBack,
@@ -402,22 +469,24 @@ fun PoemDetailsScreen(
             Spacer(Modifier.weight(1f))
             IconButton(onClick = onFavorite) {
                 Icon(
-                    if (poem.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    stringResource(R.string.favorite)
+                    painter = painterResource(R.drawable.favorites_button),
+                    contentDescription = stringResource(R.string.favorite),
                 )
             }
             IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, stringResource(R.string.edit)) }
             IconButton(onClick = { confirmDelete = true }) {
                 Icon(
-                    Icons.Default.DeleteOutline,
-                    stringResource(R.string.delete)
+                    painter = painterResource(R.drawable.delete_button),
+                    contentDescription = stringResource(R.string.delete),
                 )
             }
         }
-        Column(Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(24.dp)) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 24.dp)
+        ) {
             Text(
                 poem.title,
                 style = MaterialTheme.typography.displaySmall,
@@ -489,9 +558,11 @@ fun PoemEditorScreen(
         title.isNotBlank() && author.isNotBlank() && content.isNotBlank() &&
                 (year.isBlank() || year.toIntOrNull() != null)
     Column(Modifier.fillMaxSize()) {
-        Row(Modifier
-            .fillMaxWidth()
-            .padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(8.dp), verticalAlignment = Alignment.CenterVertically
+        ) {
             IconButton(onClick = onBack) {
                 Icon(
                     Icons.Default.Close,
@@ -529,7 +600,7 @@ fun PoemEditorScreen(
             Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(20.dp),
+                .padding(horizontal = 16.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             OutlinedTextField(
@@ -696,6 +767,14 @@ private fun PoemDetailsScreenPreview() {
             onFavorite = {},
             onDelete = {},
         )
+    }
+}
+
+@Preview(name = "Profile", showBackground = true)
+@Composable
+private fun ProfileScreenPreview() {
+    VersekeepTheme {
+        ProfileScreen()
     }
 }
 

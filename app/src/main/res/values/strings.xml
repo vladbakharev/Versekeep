@@ -3,6 +3,7 @@
     <string name="nav_home">Home</string>
     <string name="nav_library">Library</string>
     <string name="nav_favorites">Favorites</string>
+    <string name="nav_profile">Profile</string>
     <string name="add_poem">Add poem</string>
     <string name="add_first_poem">Add your first poem</string>
     <string name="empty_collection_title">Your collection starts here</string>
