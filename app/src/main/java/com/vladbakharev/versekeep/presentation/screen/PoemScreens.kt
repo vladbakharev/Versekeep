@@ -1,6 +1,7 @@
 package com.vladbakharev.versekeep.presentation.screen
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -12,12 +13,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -81,9 +83,11 @@ fun HomeScreen(
     Column(Modifier.fillMaxSize()) {
         if (poems.isEmpty()) {
             ScreenTitle(stringResource(R.string.app_name))
-            Box(Modifier
-                .fillMaxWidth()
-                .weight(1f)) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
                 EmptyState(
                     Icons.Default.AutoStories,
                     stringResource(R.string.empty_collection_title),
@@ -290,9 +294,11 @@ fun FavoritesScreen(
     Column(Modifier.fillMaxSize()) {
         if (poems.isEmpty()) {
             ScreenTitle(stringResource(R.string.nav_favorites))
-            Box(Modifier
-                .fillMaxWidth()
-                .weight(1f)) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            ) {
                 EmptyState(
                     Icons.Default.FavoriteBorder,
                     stringResource(R.string.no_favorites),
@@ -460,68 +466,116 @@ fun PoemDetailsScreen(
                 .fillMaxWidth()
                 .padding(8.dp), verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onBack) {
+            IconButton(
+                onClick = onBack,
+                modifier = Modifier.size(48.dp),
+            ) {
                 Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    stringResource(R.string.back)
+                    painter = painterResource(R.drawable.back_button),
+                    contentDescription = stringResource(R.string.back),
+                    modifier = Modifier.size(24.dp),
+                    tint = Color.Black,
                 )
             }
             Spacer(Modifier.weight(1f))
-            IconButton(onClick = onFavorite) {
+            IconButton(
+                onClick = onFavorite,
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(
+                        if (poem.isFavorite) Color.Black else Color.Transparent,
+                        RoundedCornerShape(50),
+                    ),
+            ) {
                 Icon(
                     painter = painterResource(R.drawable.favorites_button),
                     contentDescription = stringResource(R.string.favorite),
+                    modifier = Modifier.size(24.dp),
+                    tint = if (poem.isFavorite) Color.White else Color.Black,
                 )
             }
-            IconButton(onClick = onEdit) { Icon(Icons.Default.Edit, stringResource(R.string.edit)) }
-            IconButton(onClick = { confirmDelete = true }) {
+            IconButton(
+                onClick = onEdit,
+                modifier = Modifier.size(48.dp),
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.edit_button),
+                    contentDescription = stringResource(R.string.edit),
+                    modifier = Modifier.size(24.dp),
+                    tint = Color.Black,
+                )
+            }
+            IconButton(
+                onClick = { confirmDelete = true },
+                modifier = Modifier.size(48.dp),
+            ) {
                 Icon(
                     painter = painterResource(R.drawable.delete_button),
                     contentDescription = stringResource(R.string.delete),
+                    modifier = Modifier.size(24.dp),
+                    tint = Color.Black,
                 )
             }
         }
         Column(
             Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 24.dp)
+                .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 24.dp)
         ) {
-            Text(
-                poem.title,
-                style = MaterialTheme.typography.displaySmall,
-                fontFamily = CormorantGaramond,
-                fontWeight = FontWeight.Bold,
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                poem.author,
-                style = MaterialTheme.typography.titleLarge,
-                fontSize = 24.textSp,
-                fontFamily = CormorantGaramondItalic,
-                fontWeight = FontWeight.Bold,
-                fontStyle = FontStyle.Italic,
-                color = MaterialTheme.colorScheme.primary
-            )
-            poem.year?.let {
-                Text(
-                    it.toString(),
-                    fontSize = 18.textSp,
-                    fontFamily = CormorantGaramondItalic,
-                    fontWeight = FontWeight.Bold,
-                    fontStyle = FontStyle.Italic,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+            Card(
+                modifier = Modifier.fillMaxSize(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    contentColor = MaterialTheme.colorScheme.onBackground,
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+            ) {
+                Column(
+                    Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(16.dp),
+                ) {
+                    Text(
+                        poem.title,
+                        style = MaterialTheme.typography.displaySmall,
+                        fontFamily = CormorantGaramond,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        poem.author,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontSize = 24.textSp,
+                        fontFamily = CormorantGaramondItalic,
+                        fontWeight = FontWeight.Bold,
+                        fontStyle = FontStyle.Italic,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    poem.year?.let {
+                        Text(
+                            it.toString(),
+                            fontSize = 20.textSp,
+                            fontFamily = CormorantGaramondItalic,
+                            fontWeight = FontWeight.Bold,
+                            fontStyle = FontStyle.Italic,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 24.dp),
+                        thickness = 2.dp,
+                    )
+                    Text(
+                        poem.content,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontSize = 16.textSp,
+                        fontFamily = GnuTypewriter,
+                        letterSpacing = (-1).textSp,
+                        lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.25f,
+                    )
+                }
             }
-            HorizontalDivider(Modifier.padding(vertical = 24.dp))
-            Text(
-                poem.content,
-                style = MaterialTheme.typography.bodyLarge,
-                fontSize = 18.textSp,
-                fontFamily = GnuTypewriter,
-                letterSpacing = (-1).textSp,
-                lineHeight = MaterialTheme.typography.bodyLarge.lineHeight * 1.25f,
-            )
         }
     }
     if (confirmDelete) {
@@ -557,6 +611,16 @@ fun PoemEditorScreen(
     val valid =
         title.isNotBlank() && author.isNotBlank() && content.isNotBlank() &&
                 (year.isBlank() || year.toIntOrNull() != null)
+    val fieldShape = RoundedCornerShape(32.dp)
+    val fieldTextStyle = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.textSp)
+    val fieldColors = TextFieldDefaults.colors(
+        focusedContainerColor = Color.White,
+        unfocusedContainerColor = Color.White,
+        errorContainerColor = Color.White,
+        focusedIndicatorColor = Color.Transparent,
+        unfocusedIndicatorColor = Color.Transparent,
+        errorIndicatorColor = Color.Transparent,
+    )
     Column(Modifier.fillMaxSize()) {
         Row(
             Modifier
@@ -565,8 +629,10 @@ fun PoemEditorScreen(
         ) {
             IconButton(onClick = onBack) {
                 Icon(
-                    Icons.Default.Close,
-                    stringResource(R.string.close)
+                    painter = painterResource(R.drawable.back_button),
+                    contentDescription = stringResource(R.string.back),
+                    modifier = Modifier.size(24.dp),
+                    tint = Color.Black,
                 )
             }
             Text(
@@ -575,26 +641,31 @@ fun PoemEditorScreen(
                 fontWeight = FontWeight.Bold,
             )
             Spacer(Modifier.weight(1f))
-            TextButton(onClick = {
-                attempted = true
-                if (valid) {
-                    onSave(
-                        (
-                                poem ?: Poem(
-                                    title = "",
-                                    author = "",
-                                    year = null,
-                                    content = "",
-                                )
-                                ).copy(
-                                title = title,
-                                author = author,
-                                year = year.toIntOrNull(),
-                                content = content
-                            ),
-                    )
-                }
-            }) { Text(stringResource(R.string.save)) }
+            TextButton(
+                onClick = {
+                    attempted = true
+                    if (valid) {
+                        onSave(
+                            (
+                                    poem ?: Poem(
+                                        title = "",
+                                        author = "",
+                                        year = null,
+                                        content = "",
+                                    )
+                                    ).copy(
+                                    title = title,
+                                    author = author,
+                                    year = year.toIntOrNull(),
+                                    content = content
+                                ),
+                        )
+                    }
+                },
+                modifier = Modifier.align(Alignment.CenterVertically),
+            ) {
+                Text(stringResource(R.string.save), fontSize = 18.textSp)
+            }
         }
         Column(
             Modifier
@@ -603,38 +674,57 @@ fun PoemEditorScreen(
                 .padding(horizontal = 16.dp, vertical = 20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            OutlinedTextField(
+            TextField(
                 title,
                 { title = it },
                 label = { Text(stringResource(R.string.title)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(8.dp, fieldShape),
                 singleLine = true,
                 isError = attempted && title.isBlank(),
+                shape = fieldShape,
+                textStyle = fieldTextStyle,
+                colors = fieldColors,
             )
-            OutlinedTextField(
+            TextField(
                 author,
                 { author = it },
                 label = { Text(stringResource(R.string.author)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(8.dp, fieldShape),
                 singleLine = true,
                 isError = attempted && author.isBlank(),
+                shape = fieldShape,
+                textStyle = fieldTextStyle,
+                colors = fieldColors,
             )
-            OutlinedTextField(
+            TextField(
                 year,
                 { year = it.filter(Char::isDigit).take(4) },
                 label = { Text(stringResource(R.string.year_optional)) },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(8.dp, fieldShape),
                 singleLine = true,
+                shape = fieldShape,
+                textStyle = fieldTextStyle,
+                colors = fieldColors,
             )
-            OutlinedTextField(
+            TextField(
                 content,
                 { content = it },
                 label = { Text(stringResource(R.string.poem)) },
                 modifier = Modifier
                     .fillMaxWidth()
+                    .shadow(8.dp, fieldShape)
                     .heightIn(min = 300.dp),
                 isError = attempted && content.isBlank(),
                 placeholder = { Text(stringResource(R.string.poem_hint)) },
+                shape = fieldShape,
+                textStyle = fieldTextStyle,
+                colors = fieldColors,
             )
             if (attempted && !valid) {
                 Text(

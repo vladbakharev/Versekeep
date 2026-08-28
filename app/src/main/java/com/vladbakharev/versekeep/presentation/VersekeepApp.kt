@@ -2,6 +2,7 @@ package com.vladbakharev.versekeep.presentation
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
@@ -51,7 +52,6 @@ import com.vladbakharev.versekeep.presentation.screen.LibraryScreen
 import com.vladbakharev.versekeep.presentation.screen.PoemDetailsScreen
 import com.vladbakharev.versekeep.presentation.screen.PoemEditorScreen
 import com.vladbakharev.versekeep.presentation.screen.ProfileScreen
-import com.vladbakharev.versekeep.presentation.theme.VersekeepGray
 
 private data class BottomNavItem(
     val label: String,
@@ -124,7 +124,7 @@ fun VersekeepApp(
                             val selected = currentRoute == route
                             val contentColor =
                                 if (selected) MaterialTheme.colorScheme.surface
-                                else VersekeepGray
+                                else Color.Black
                             Column(
                                 modifier = Modifier
                                     .weight(1f)
@@ -132,7 +132,7 @@ fun VersekeepApp(
                                     .padding(horizontal = 4.dp, vertical = 4.dp)
                                     .clip(RoundedCornerShape(32.dp))
                                     .background(
-                                        if (selected) VersekeepGray
+                                    if (selected) Color.Black
                                         else Color.Transparent,
                                     )
                                     .clickable { navigateToRoot(route) },
@@ -161,10 +161,12 @@ fun VersekeepApp(
             if (isRoot && currentRoute != Screen.PROFILE) {
                 FloatingActionButton(
                     onClick = { navController.navigate(Screen.editor()) },
-                    modifier = Modifier.padding(end = 8.dp),
+                    modifier = Modifier
+                        .padding(end = 8.dp)
+                        .border(0.5.dp, Color.White, RoundedCornerShape(32.dp)),
                     shape = RoundedCornerShape(32.dp),
-                    containerColor = VersekeepGray,
-                    contentColor = MaterialTheme.colorScheme.surface,
+                    containerColor = Color.Black,
+                    contentColor = Color.White,
                     elevation = FloatingActionButtonDefaults.elevation(
                         defaultElevation = 8.dp,
                         pressedElevation = 8.dp,
@@ -185,7 +187,7 @@ fun VersekeepApp(
             NavHost(navController = navController, startDestination = Screen.HOME) {
                 composable(Screen.HOME) {
                     HomeScreen(
-                        poems = poems.sortedByDescending { it.createdAt }.take(8),
+                        poems = poems.sortedByDescending { it.createdAt },
                         onPoem = { navController.navigate(Screen.details(it)) },
                         onAdd = { navController.navigate(Screen.editor()) },
                     )

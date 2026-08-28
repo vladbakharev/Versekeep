@@ -12,8 +12,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.vladbakharev.versekeep.R
 
-val VersekeepGray = Color(0xFF494D4F)
-
 private val Literata = FontFamily(Font(R.font.literata))
 
 private val DefaultTypography = Typography()
