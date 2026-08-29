@@ -189,7 +189,6 @@ fun VersekeepApp(
                     HomeScreen(
                         poems = poems.sortedByDescending { it.createdAt },
                         onPoem = { navController.navigate(Screen.details(it)) },
-                        onAdd = { navController.navigate(Screen.editor()) },
                     )
                 }
                 composable(Screen.LIBRARY) {
@@ -204,7 +203,9 @@ fun VersekeepApp(
                 }
                 composable(Screen.FAVORITES) {
                     FavoritesScreen(
-                        poems = poems.filter { it.isFavorite },
+                        poems = poems
+                            .filter { it.isFavorite }
+                            .sortedByDescending { it.favoritedAt ?: 0L },
                         onPoem = { navController.navigate(Screen.details(it)) },
                     )
                 }

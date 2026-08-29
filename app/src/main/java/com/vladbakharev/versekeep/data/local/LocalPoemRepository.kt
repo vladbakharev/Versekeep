@@ -28,6 +28,8 @@ constructor(
                 if (poem.year == null) putNull("year") else put("year", poem.year)
                 put("content", poem.content.trim())
                 put("favorite", if (poem.isFavorite) 1 else 0)
+                if (poem.favoritedAt == null) putNull("favorited_at")
+                else put("favorited_at", poem.favoritedAt)
                 put("created_at", if (poem.id == 0L) now else poem.createdAt)
                 put("updated_at", now)
             }
@@ -54,8 +56,14 @@ constructor(
 
     override fun toggleFavorite(id: Long) {
         database.writableDatabase.execSQL(
-            "UPDATE poems SET favorite = 1 - favorite, updated_at = ? WHERE id = ?",
-            arrayOf(System.currentTimeMillis(), id),
+            """
+            UPDATE poems
+            SET favorite = 1 - favorite,
+                favorited_at = CASE WHEN favorite = 0 THEN ? ELSE NULL END,
+                updated_at = ?
+            WHERE id = ?
+            """.trimIndent(),
+            arrayOf(System.currentTimeMillis(), System.currentTimeMillis(), id),
         )
         refresh()
     }
@@ -82,6 +90,10 @@ constructor(
                             year = if (cursor.isNull(yearIndex)) null else cursor.getInt(yearIndex),
                             content = cursor.getString(cursor.getColumnIndexOrThrow("content")),
                             isFavorite = cursor.getInt(cursor.getColumnIndexOrThrow("favorite")) == 1,
+                            favoritedAt =
+                                cursor.getColumnIndexOrThrow("favorited_at").let { index ->
+                                    if (cursor.isNull(index)) null else cursor.getLong(index)
+                                },
                             createdAt = cursor.getLong(cursor.getColumnIndexOrThrow("created_at")),
                             updatedAt = cursor.getLong(cursor.getColumnIndexOrThrow("updated_at")),
                         )

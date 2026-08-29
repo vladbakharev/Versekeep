@@ -7,12 +7,12 @@
     <string name="add_poem">Add poem</string>
     <string name="add_first_poem">Add your first poem</string>
     <string name="empty_collection_title">Your collection starts here</string>
-    <string name="empty_collection_body">Save a poem and return to its words whenever you like.</string>
-    <string name="search_hint">Search poems, authors, or words</string>
+    <string name="empty_collection_body">Save a poem by pressing add button</string>
+    <string name="search_hint">Title, author or text</string>
     <string name="filters">Filters</string>
     <string name="clear">Clear</string>
     <string name="no_poems_found">No poems found</string>
-    <string name="no_poems_found_body">Try changing your search or filters.</string>
+    <string name="no_poems_found_body">Try changing your search or filters</string>
     <string name="filter_and_sort">Filter &amp; sort</string>
     <string name="author">Author</string>
     <string name="all">All</string>
@@ -20,7 +20,7 @@
     <string name="sort_by">Sort by</string>
     <string name="show_results">Show results</string>
     <string name="no_favorites">No favorites yet</string>
-    <string name="no_favorites_body">Tap the heart on a poem to keep it close.</string>
+    <string name="no_favorites_body">Tap the heart button on a poem to save it here</string>
     <string name="favorite">Favorite</string>
     <string name="back">Back</string>
     <string name="edit">Edit</string>

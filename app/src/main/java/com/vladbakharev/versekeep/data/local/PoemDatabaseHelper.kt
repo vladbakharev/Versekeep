@@ -23,6 +23,7 @@ class PoemDatabaseHelper
                     year INTEGER,
                     content TEXT NOT NULL,
                     favorite INTEGER NOT NULL DEFAULT 0,
+                    favorited_at INTEGER,
                     created_at INTEGER NOT NULL,
                     updated_at INTEGER NOT NULL
                 )
@@ -34,10 +35,15 @@ class PoemDatabaseHelper
             db: SQLiteDatabase,
             oldVersion: Int,
             newVersion: Int,
-        ) = Unit
+        ) {
+            if (oldVersion < 2) {
+                db.execSQL("ALTER TABLE poems ADD COLUMN favorited_at INTEGER")
+                db.execSQL("UPDATE poems SET favorited_at = updated_at WHERE favorite = 1")
+            }
+        }
 
         private companion object {
             const val DATABASE_NAME = "versekeep.db"
-            const val DATABASE_VERSION = 1
+            const val DATABASE_VERSION = 2
         }
     }

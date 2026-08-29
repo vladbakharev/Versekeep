@@ -20,7 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.Font
@@ -78,7 +78,6 @@ private fun ScreenTitle(
 fun HomeScreen(
     poems: List<Poem>,
     onPoem: (Long) -> Unit,
-    onAdd: () -> Unit,
 ) {
     Column(Modifier.fillMaxSize()) {
         if (poems.isEmpty()) {
@@ -89,11 +88,9 @@ fun HomeScreen(
                     .weight(1f)
             ) {
                 EmptyState(
-                    Icons.Default.AutoStories,
+                    painterResource(R.drawable.empty_collection),
                     stringResource(R.string.empty_collection_title),
                     stringResource(R.string.empty_collection_body),
-                    stringResource(R.string.add_first_poem),
-                    onAdd,
                 )
             }
         } else {
@@ -132,24 +129,40 @@ fun LibraryScreen(
 
     @Composable
     fun LibraryControls(horizontalPadding: Dp) {
-        OutlinedTextField(
+        TextField(
             value = filter.query,
             onValueChange = { query -> onFilter { it.copy(query = query) } },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = horizontalPadding),
+                .padding(horizontal = horizontalPadding)
+                .shadow(8.dp, RoundedCornerShape(32.dp)),
             placeholder = { Text(stringResource(R.string.search_hint)) },
-            leadingIcon = { Icon(Icons.Default.Search, null) },
+            leadingIcon = {
+                Icon(
+                    painter = painterResource(R.drawable.search_icon),
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp),
+                    tint = Color.Black,
+                )
+            },
             trailingIcon = {
                 IconButton(onClick = { filtersOpen = true }) {
-                    Icon(Icons.Default.Tune, stringResource(R.string.filters))
+                    Icon(
+                        painter = painterResource(R.drawable.sort_button),
+                        contentDescription = stringResource(R.string.filters),
+                        modifier = Modifier.size(24.dp),
+                        tint = Color.Black,
+                    )
                 }
             },
             singleLine = true,
             shape = RoundedCornerShape(32.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.background,
-                unfocusedContainerColor = MaterialTheme.colorScheme.background,
+            textStyle = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.textSp),
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.White,
+                unfocusedContainerColor = Color.White,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
             ),
         )
         if (active) {
@@ -171,32 +184,36 @@ fun LibraryScreen(
         }
     }
 
-    if (poems.isEmpty()) {
-        Column(Modifier.fillMaxSize()) {
-            ScreenTitle(stringResource(R.string.nav_library))
-            LibraryControls(horizontalPadding = 20.dp)
-            Box(Modifier.weight(1f)) {
-                EmptyState(
-                    Icons.Default.SearchOff,
-                    stringResource(R.string.no_poems_found),
-                    stringResource(R.string.no_poems_found_body),
-                )
+    PoemList(
+        poems = poems,
+        onPoem = onPoem,
+        headerContent = {
+            item(key = "screen_title", span = { GridItemSpan(maxLineSpan) }) {
+                ScreenTitle(stringResource(R.string.nav_library), topPadding = 16.dp)
             }
-        }
-    } else {
-        PoemList(
-            poems = poems,
-            onPoem = onPoem,
-            headerContent = {
-                item(key = "screen_title", span = { GridItemSpan(maxLineSpan) }) {
-                    ScreenTitle(stringResource(R.string.nav_library), topPadding = 16.dp)
-                }
-                item(key = "library_controls", span = { GridItemSpan(maxLineSpan) }) {
+            item(key = "library_controls", span = { GridItemSpan(maxLineSpan) }) {
+                Column {
                     LibraryControls(horizontalPadding = 0.dp)
+                    Spacer(Modifier.height(8.dp))
                 }
-            },
-        )
-    }
+            }
+        },
+        emptyContent = {
+            item(key = "empty_search", span = { GridItemSpan(maxLineSpan) }) {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(360.dp),
+                ) {
+                    EmptyState(
+                        painterResource(R.drawable.search_icon),
+                        stringResource(R.string.no_poems_found),
+                        stringResource(R.string.no_poems_found_body),
+                    )
+                }
+            }
+        },
+    )
     if (filtersOpen) {
         FilterSheet(
             authors = allPoems.map(Poem::author).distinct().sorted(),
@@ -300,7 +317,7 @@ fun FavoritesScreen(
                     .weight(1f)
             ) {
                 EmptyState(
-                    Icons.Default.FavoriteBorder,
+                    painterResource(R.drawable.favorites_button),
                     stringResource(R.string.no_favorites),
                     stringResource(R.string.no_favorites_body),
                 )
@@ -339,6 +356,7 @@ private fun PoemList(
     onPoem: (Long) -> Unit,
     contentPadding: PaddingValues = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
     headerContent: LazyGridScope.() -> Unit = {},
+    emptyContent: LazyGridScope.() -> Unit = {},
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -348,6 +366,7 @@ private fun PoemList(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         headerContent()
+        if (poems.isEmpty()) emptyContent()
         itemsIndexed(
             items = poems,
             key = { _, poem -> poem.id },
@@ -612,7 +631,7 @@ fun PoemEditorScreen(
         title.isNotBlank() && author.isNotBlank() && content.isNotBlank() &&
                 (year.isBlank() || year.toIntOrNull() != null)
     val fieldShape = RoundedCornerShape(32.dp)
-    val fieldTextStyle = MaterialTheme.typography.bodyLarge.copy(fontSize = 18.textSp)
+    val fieldTextStyle = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.textSp)
     val fieldColors = TextFieldDefaults.colors(
         focusedContainerColor = Color.White,
         unfocusedContainerColor = Color.White,
@@ -670,9 +689,8 @@ fun PoemEditorScreen(
         Column(
             Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp, vertical = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+                .padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             TextField(
                 title,
@@ -718,8 +736,8 @@ fun PoemEditorScreen(
                 label = { Text(stringResource(R.string.poem)) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .shadow(8.dp, fieldShape)
-                    .heightIn(min = 300.dp),
+                    .weight(1f)
+                    .shadow(8.dp, fieldShape),
                 isError = attempted && content.isBlank(),
                 placeholder = { Text(stringResource(R.string.poem_hint)) },
                 shape = fieldShape,
@@ -738,11 +756,9 @@ fun PoemEditorScreen(
 
 @Composable
 private fun EmptyState(
-    icon: ImageVector,
+    icon: Painter,
     title: String,
     body: String,
-    action: String? = null,
-    onAction: (() -> Unit)? = null,
     onPrimaryBackground: Boolean = false,
 ) {
     val iconColor =
@@ -762,23 +778,18 @@ private fun EmptyState(
     ) {
         Icon(icon, null, modifier = Modifier.size(64.dp), tint = iconColor)
         Spacer(Modifier.height(18.dp))
-        Text(title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        Text(body, color = bodyColor, modifier = Modifier.padding(vertical = 8.dp))
-        if (action != null && onAction != null) {
-            Button(
-                onClick = onAction,
-                modifier = Modifier.padding(top = 12.dp),
-                colors =
-                    if (onPrimaryBackground) {
-                        ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surface,
-                            contentColor = MaterialTheme.colorScheme.primary,
-                        )
-                    } else {
-                        ButtonDefaults.buttonColors()
-                    },
-            ) { Text(action) }
-        }
+        Text(
+            title,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            body,
+            color = bodyColor,
+            modifier = Modifier.padding(vertical = 8.dp),
+            textAlign = TextAlign.Center,
+        )
     }
 }
 
@@ -815,7 +826,6 @@ private fun HomeScreenPreview() {
         HomeScreen(
             poems = previewPoems,
             onPoem = {},
-            onAdd = {},
         )
     }
 }
@@ -868,12 +878,24 @@ private fun ProfileScreenPreview() {
     }
 }
 
-@Preview(name = "Poem editor", showBackground = true)
+@Preview(name = "Edit poem", showBackground = true)
 @Composable
 private fun PoemEditorScreenPreview() {
     VersekeepTheme {
         PoemEditorScreen(
             poem = previewPoems.first(),
+            onBack = {},
+            onSave = {},
+        )
+    }
+}
+
+@Preview(name = "Add poem", showBackground = true)
+@Composable
+private fun AddPoemScreenPreview() {
+    VersekeepTheme {
+        PoemEditorScreen(
+            poem = null,
             onBack = {},
             onSave = {},
         )

@@ -7,6 +7,7 @@ data class Poem(
     val year: Int?,
     val content: String,
     val isFavorite: Boolean = false,
+    val favoritedAt: Long? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
 )
