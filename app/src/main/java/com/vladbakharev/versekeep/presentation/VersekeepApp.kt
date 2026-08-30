@@ -1,6 +1,10 @@
 package com.vladbakharev.versekeep.presentation
 
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -69,7 +73,8 @@ fun VersekeepApp(
     val filter by viewModel.filter.collectAsStateWithLifecycle()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
-    val isRoot = currentRoute in setOf(Screen.HOME, Screen.LIBRARY, Screen.FAVORITES, Screen.PROFILE)
+    val rootRoutes = listOf(Screen.HOME, Screen.LIBRARY, Screen.FAVORITES, Screen.PROFILE)
+    val isRoot = currentRoute in rootRoutes
 
     fun navigateToRoot(route: String) {
         navController.navigate(route) {
@@ -184,7 +189,66 @@ fun VersekeepApp(
                 .padding(top = padding.calculateTopPadding())
                 .fillMaxSize(),
         ) {
-            NavHost(navController = navController, startDestination = Screen.HOME) {
+            NavHost(
+                navController = navController,
+                startDestination = Screen.HOME,
+                enterTransition = {
+                    val from = rootRoutes.indexOf(initialState.destination.route)
+                    val to = rootRoutes.indexOf(targetState.destination.route)
+                    if (from >= 0 && to >= 0) {
+                        slideIntoContainer(
+                            towards =
+                                if (to > from) AnimatedContentTransitionScope.SlideDirection.Left
+                                else AnimatedContentTransitionScope.SlideDirection.Right,
+                            animationSpec = tween(300),
+                        )
+                    } else {
+                        EnterTransition.None
+                    }
+                },
+                exitTransition = {
+                    val from = rootRoutes.indexOf(initialState.destination.route)
+                    val to = rootRoutes.indexOf(targetState.destination.route)
+                    if (from >= 0 && to >= 0) {
+                        slideOutOfContainer(
+                            towards =
+                                if (to > from) AnimatedContentTransitionScope.SlideDirection.Left
+                                else AnimatedContentTransitionScope.SlideDirection.Right,
+                            animationSpec = tween(300),
+                        )
+                    } else {
+                        ExitTransition.None
+                    }
+                },
+                popEnterTransition = {
+                    val from = rootRoutes.indexOf(initialState.destination.route)
+                    val to = rootRoutes.indexOf(targetState.destination.route)
+                    if (from >= 0 && to >= 0) {
+                        slideIntoContainer(
+                            towards =
+                                if (to > from) AnimatedContentTransitionScope.SlideDirection.Left
+                                else AnimatedContentTransitionScope.SlideDirection.Right,
+                            animationSpec = tween(300),
+                        )
+                    } else {
+                        EnterTransition.None
+                    }
+                },
+                popExitTransition = {
+                    val from = rootRoutes.indexOf(initialState.destination.route)
+                    val to = rootRoutes.indexOf(targetState.destination.route)
+                    if (from >= 0 && to >= 0) {
+                        slideOutOfContainer(
+                            towards =
+                                if (to > from) AnimatedContentTransitionScope.SlideDirection.Left
+                                else AnimatedContentTransitionScope.SlideDirection.Right,
+                            animationSpec = tween(300),
+                        )
+                    } else {
+                        ExitTransition.None
+                    }
+                },
+            ) {
                 composable(Screen.HOME) {
                     HomeScreen(
                         poems = poems.sortedByDescending { it.createdAt },
@@ -194,10 +258,8 @@ fun VersekeepApp(
                 composable(Screen.LIBRARY) {
                     LibraryScreen(
                         poems = filtered,
-                        allPoems = poems,
                         filter = filter,
                         onFilter = viewModel::updateFilter,
-                        onClear = viewModel::clearFilter,
                         onPoem = { navController.navigate(Screen.details(it)) },
                     )
                 }

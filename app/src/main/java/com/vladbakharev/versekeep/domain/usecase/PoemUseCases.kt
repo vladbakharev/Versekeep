@@ -3,6 +3,7 @@ package com.vladbakharev.versekeep.domain.usecase
 import com.vladbakharev.versekeep.domain.model.Poem
 import com.vladbakharev.versekeep.domain.model.PoemFilter
 import com.vladbakharev.versekeep.domain.model.PoemSort
+import com.vladbakharev.versekeep.domain.model.PoemSortOrder
 import com.vladbakharev.versekeep.domain.repository.PoemRepository
 import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
@@ -67,12 +68,26 @@ class FilterPoems
                     val yearMatch = filter.year == null || poem.year == filter.year
                     queryMatch && authorMatch && yearMatch
                 }.let { result ->
-                    when (filter.sort) {
-                        PoemSort.RECENT -> result.sortedByDescending(Poem::createdAt)
-                        PoemSort.TITLE -> result.sortedBy { it.title.lowercase() }
-                        PoemSort.AUTHOR -> result.sortedBy { it.author.lowercase() }
-                        PoemSort.YEAR -> result.sortedByDescending { it.year ?: Int.MIN_VALUE }
-                    }
+                when (filter.sort) {
+                    PoemSort.TITLE ->
+                        if (filter.sortOrder == PoemSortOrder.ASCENDING) {
+                            result.sortedBy { it.title.lowercase() }
+                        } else {
+                            result.sortedByDescending { it.title.lowercase() }
+                        }
+                    PoemSort.AUTHOR ->
+                        if (filter.sortOrder == PoemSortOrder.ASCENDING) {
+                            result.sortedBy { it.author.lowercase() }
+                        } else {
+                            result.sortedByDescending { it.author.lowercase() }
+                        }
+                    PoemSort.YEAR ->
+                        if (filter.sortOrder == PoemSortOrder.ASCENDING) {
+                            result.sortedBy { it.year ?: Int.MAX_VALUE }
+                        } else {
+                            result.sortedByDescending { it.year ?: Int.MIN_VALUE }
+                        }
+                }
                 }
     }
 

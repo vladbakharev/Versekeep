@@ -37,6 +37,7 @@ import com.vladbakharev.versekeep.R
 import com.vladbakharev.versekeep.domain.model.Poem
 import com.vladbakharev.versekeep.domain.model.PoemFilter
 import com.vladbakharev.versekeep.domain.model.PoemSort
+import com.vladbakharev.versekeep.domain.model.PoemSortOrder
 import com.vladbakharev.versekeep.presentation.theme.VersekeepTheme
 
 private val CormorantGaramond =
@@ -117,15 +118,11 @@ fun HomeScreen(
 @Composable
 fun LibraryScreen(
     poems: List<Poem>,
-    allPoems: List<Poem>,
     filter: PoemFilter,
     onFilter: ((PoemFilter) -> PoemFilter) -> Unit,
-    onClear: () -> Unit,
     onPoem: (Long) -> Unit,
 ) {
     var filtersOpen by remember { mutableStateOf(false) }
-    val active =
-        filter.author.isNotBlank() || filter.year != null || filter.sort != PoemSort.RECENT
 
     @Composable
     fun LibraryControls(horizontalPadding: Dp) {
@@ -165,23 +162,6 @@ fun LibraryScreen(
                 unfocusedIndicatorColor = Color.Transparent,
             ),
         )
-        if (active) {
-            Row(
-                Modifier.padding(horizontal = horizontalPadding, vertical = 10.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                if (filter.author.isNotBlank()) {
-                    InputChip(true, { onFilter { it.copy(author = "") } }, { Text(filter.author) })
-                }
-                if (filter.year != null) {
-                    InputChip(
-                        true,
-                        { onFilter { it.copy(year = null) } },
-                        { Text(filter.year.toString()) })
-                }
-                TextButton(onClick = onClear) { Text(stringResource(R.string.clear)) }
-            }
-        }
     }
 
     PoemList(
@@ -216,8 +196,6 @@ fun LibraryScreen(
     )
     if (filtersOpen) {
         FilterSheet(
-            authors = allPoems.map(Poem::author).distinct().sorted(),
-            years = allPoems.mapNotNull(Poem::year).distinct().sortedDescending(),
             filter = filter,
             onFilter = onFilter,
             onDismiss = { filtersOpen = false },
@@ -228,8 +206,6 @@ fun LibraryScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun FilterSheet(
-    authors: List<String>,
-    years: List<Int>,
     filter: PoemFilter,
     onFilter: ((PoemFilter) -> PoemFilter) -> Unit,
     onDismiss: () -> Unit,
@@ -246,53 +222,47 @@ private fun FilterSheet(
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
-            Text(stringResource(R.string.author), style = MaterialTheme.typography.titleMedium)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(
-                    filter.author.isBlank(),
-                    { onFilter { it.copy(author = "") } },
-                    { Text(stringResource(R.string.all)) })
-                authors.forEach { author ->
-                    FilterChip(
-                        filter.author == author,
-                        { onFilter { it.copy(author = author) } },
-                        { Text(author) },
-                    )
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.sort_by), style = MaterialTheme.typography.titleMedium)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PoemSort.entries.forEach { sort ->
+                        FilterChip(
+                            filter.sort == sort,
+                            { onFilter { it.copy(sort = sort) } },
+                            {
+                                Text(
+                                    stringResource(
+                                        when (sort) {
+                                            PoemSort.TITLE -> R.string.title
+                                            PoemSort.AUTHOR -> R.string.author
+                                            PoemSort.YEAR -> R.string.year
+                                        },
+                                    ),
+                                )
+                            },
+                        )
+                    }
                 }
             }
-            Text(stringResource(R.string.year), style = MaterialTheme.typography.titleMedium)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(
-                    filter.year == null,
-                    { onFilter { it.copy(year = null) } },
-                    { Text(stringResource(R.string.all)) })
-                years.forEach { year ->
-                    FilterChip(
-                        filter.year == year,
-                        { onFilter { it.copy(year = year) } },
-                        { Text(year.toString()) },
-                    )
-                }
-            }
-            Text(stringResource(R.string.sort_by), style = MaterialTheme.typography.titleMedium)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                PoemSort.entries.forEach { sort ->
-                    FilterChip(
-                        filter.sort == sort,
-                        { onFilter { it.copy(sort = sort) } },
-                        {
-                            Text(
-                                stringResource(
-                                    when (sort) {
-                                        PoemSort.RECENT -> R.string.sort_recent
-                                        PoemSort.TITLE -> R.string.sort_title
-                                        PoemSort.AUTHOR -> R.string.sort_author
-                                        PoemSort.YEAR -> R.string.sort_year
-                                    },
-                                ),
-                            )
-                        },
-                    )
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.order), style = MaterialTheme.typography.titleMedium)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PoemSortOrder.entries.forEach { order ->
+                        FilterChip(
+                            selected = filter.sortOrder == order,
+                            onClick = { onFilter { it.copy(sortOrder = order) } },
+                            label = {
+                                Text(
+                                    stringResource(
+                                        when (order) {
+                                            PoemSortOrder.ASCENDING -> R.string.ascending
+                                            PoemSortOrder.DESCENDING -> R.string.descending
+                                        },
+                                    ),
+                                )
+                            },
+                        )
+                    }
                 }
             }
             Button(
@@ -695,7 +665,14 @@ fun PoemEditorScreen(
             TextField(
                 title,
                 { title = it },
-                label = { Text(stringResource(R.string.title)) },
+                label = if (poem == null) null else {
+                    {
+                        Text(stringResource(R.string.title), fontWeight = FontWeight.Bold)
+                    }
+                },
+                placeholder = if (poem == null) {
+                    { Text(stringResource(R.string.title)) }
+                } else null,
                 modifier = Modifier
                     .fillMaxWidth()
                     .shadow(8.dp, fieldShape),
@@ -708,7 +685,14 @@ fun PoemEditorScreen(
             TextField(
                 author,
                 { author = it },
-                label = { Text(stringResource(R.string.author)) },
+                label = if (poem == null) null else {
+                    {
+                        Text(stringResource(R.string.author), fontWeight = FontWeight.Bold)
+                    }
+                },
+                placeholder = if (poem == null) {
+                    { Text(stringResource(R.string.author)) }
+                } else null,
                 modifier = Modifier
                     .fillMaxWidth()
                     .shadow(8.dp, fieldShape),
@@ -721,7 +705,14 @@ fun PoemEditorScreen(
             TextField(
                 year,
                 { year = it.filter(Char::isDigit).take(4) },
-                label = { Text(stringResource(R.string.year_optional)) },
+                label = if (poem == null) null else {
+                    {
+                        Text(stringResource(R.string.year_optional), fontWeight = FontWeight.Bold)
+                    }
+                },
+                placeholder = if (poem == null) {
+                    { Text(stringResource(R.string.year_optional)) }
+                } else null,
                 modifier = Modifier
                     .fillMaxWidth()
                     .shadow(8.dp, fieldShape),
@@ -733,7 +724,11 @@ fun PoemEditorScreen(
             TextField(
                 content,
                 { content = it },
-                label = { Text(stringResource(R.string.poem)) },
+                label = if (poem == null) null else {
+                    {
+                        Text(stringResource(R.string.poem), fontWeight = FontWeight.Bold)
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
@@ -836,10 +831,8 @@ private fun LibraryScreenPreview() {
     VersekeepTheme {
         LibraryScreen(
             poems = previewPoems,
-            allPoems = previewPoems,
             filter = PoemFilter(),
             onFilter = {},
-            onClear = {},
             onPoem = {},
         )
     }

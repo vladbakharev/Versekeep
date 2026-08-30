@@ -12,11 +12,18 @@ data class Poem(
     val updatedAt: Long = System.currentTimeMillis(),
 )
 
-enum class PoemSort { RECENT, TITLE, AUTHOR, YEAR }
+enum class PoemSort {
+    TITLE,
+    AUTHOR,
+    YEAR,
+}
+
+enum class PoemSortOrder { ASCENDING, DESCENDING }
 
 data class PoemFilter(
     val query: String = "",
     val author: String = "",
     val year: Int? = null,
-    val sort: PoemSort = PoemSort.RECENT,
+    val sort: PoemSort = PoemSort.TITLE,
+    val sortOrder: PoemSortOrder = PoemSortOrder.ASCENDING,
 )
