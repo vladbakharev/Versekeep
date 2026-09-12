@@ -3,6 +3,7 @@ package com.vladbakharev.versekeep.presentation.theme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -77,6 +78,46 @@ private val VersekeepColors =
         surfaceContainerLowest = Color.White,
     )
 
+private val VersekeepDarkColors =
+    darkColorScheme(
+        primary = Color.White,
+        onPrimary = Color.Black,
+        primaryContainer = Color.White,
+        onPrimaryContainer = Color.Black,
+        inversePrimary = Color.Black,
+        secondary = Color.White,
+        onSecondary = Color.Black,
+        secondaryContainer = Color.White,
+        onSecondaryContainer = Color.Black,
+        tertiary = Color.White,
+        onTertiary = Color.Black,
+        tertiaryContainer = Color.White,
+        onTertiaryContainer = Color.Black,
+        background = Color.Black,
+        onBackground = Color.White,
+        surface = Color.Black,
+        onSurface = Color.White,
+        surfaceVariant = Color.Black,
+        onSurfaceVariant = Color.White,
+        surfaceTint = Color.White,
+        inverseSurface = Color.White,
+        inverseOnSurface = Color.Black,
+        error = Color.White,
+        onError = Color.Black,
+        errorContainer = Color.White,
+        onErrorContainer = Color.Black,
+        outline = Color.White,
+        outlineVariant = Color.White,
+        scrim = Color.White,
+        surfaceBright = Color.Black,
+        surfaceDim = Color.Black,
+        surfaceContainer = Color.Black,
+        surfaceContainerHigh = Color.Black,
+        surfaceContainerHighest = Color.Black,
+        surfaceContainerLow = Color.Black,
+        surfaceContainerLowest = Color.Black,
+    )
+
 private val VersekeepShapes =
     Shapes(
         extraSmall = RoundedCornerShape(32.dp),
@@ -87,9 +128,12 @@ private val VersekeepShapes =
     )
 
 @Composable
-fun VersekeepTheme(content: @Composable () -> Unit) {
+fun VersekeepTheme(
+    darkTheme: Boolean = false,
+    content: @Composable () -> Unit,
+) {
     MaterialTheme(
-        colorScheme = VersekeepColors,
+        colorScheme = if (darkTheme) VersekeepDarkColors else VersekeepColors,
         shapes = VersekeepShapes,
         typography = VersekeepTypography,
         content = content,

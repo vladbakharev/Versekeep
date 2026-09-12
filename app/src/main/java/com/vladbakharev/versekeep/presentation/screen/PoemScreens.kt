@@ -1,8 +1,14 @@
 package com.vladbakharev.versekeep.presentation.screen
 
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.EnterExitState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -16,10 +22,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -54,6 +65,14 @@ private val CormorantGaramondItalic =
 
 private val GnuTypewriter =
     FontFamily(Font(R.font.gnu_typewriter, weight = FontWeight.Normal))
+
+@Composable
+private fun Modifier.darkThemeOutline(shape: Shape): Modifier =
+    if (MaterialTheme.colorScheme.background.luminance() < 0.5f) {
+        border(0.5.dp, MaterialTheme.colorScheme.outline, shape)
+    } else {
+        this
+    }
 
 @Composable
 private fun ScreenTitle(
@@ -132,14 +151,15 @@ fun LibraryScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = horizontalPadding)
-                .shadow(8.dp, RoundedCornerShape(32.dp)),
+                .shadow(8.dp, RoundedCornerShape(32.dp))
+                .darkThemeOutline(RoundedCornerShape(32.dp)),
             placeholder = { Text(stringResource(R.string.search_hint)) },
             leadingIcon = {
                 Icon(
                     painter = painterResource(R.drawable.search_icon),
                     contentDescription = null,
                     modifier = Modifier.size(24.dp),
-                    tint = Color.Black,
+                    tint = MaterialTheme.colorScheme.onSurface,
                 )
             },
             trailingIcon = {
@@ -148,7 +168,7 @@ fun LibraryScreen(
                         painter = painterResource(R.drawable.sort_button),
                         contentDescription = stringResource(R.string.filters),
                         modifier = Modifier.size(24.dp),
-                        tint = Color.Black,
+                        tint = MaterialTheme.colorScheme.onSurface,
                     )
                 }
             },
@@ -156,8 +176,8 @@ fun LibraryScreen(
             shape = RoundedCornerShape(32.dp),
             textStyle = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.textSp),
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White,
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
             ),
@@ -313,9 +333,41 @@ fun FavoritesScreen(
 }
 
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(
+    darkTheme: Boolean,
+    onDarkThemeChange: (Boolean) -> Unit,
+) {
     Column(Modifier.fillMaxSize()) {
         ScreenTitle(stringResource(R.string.nav_profile))
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .darkThemeOutline(RoundedCornerShape(32.dp)),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.dark_theme),
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                Switch(
+                    checked = darkTheme,
+                    onCheckedChange = onDarkThemeChange,
+                )
+            }
+        }
     }
 }
 
@@ -353,7 +405,8 @@ private fun PoemList(
                 onClick = { onPoem(poem.id) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(0.8f),
+                    .aspectRatio(0.8f)
+                    .darkThemeOutline(RoundedCornerShape(32.dp)),
                 colors = CardDefaults.cardColors(
                     containerColor = cardColor,
                     contentColor = cardContentColor,
@@ -443,13 +496,46 @@ private fun PoemList(
 @Composable
 fun PoemDetailsScreen(
     poem: Poem,
+    animatedVisibilityScope: AnimatedVisibilityScope? = null,
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onFavorite: () -> Unit,
     onDelete: () -> Unit,
 ) {
     var confirmDelete by remember { mutableStateOf(false) }
-    Column(Modifier.fillMaxSize()) {
+    var animatePage by rememberSaveable { mutableStateOf(true) }
+    val pageRotation =
+        if (animatedVisibilityScope != null && animatePage) {
+            with(animatedVisibilityScope) {
+                val rotation by transition.animateFloat(
+                    transitionSpec = {
+                        tween(
+                            durationMillis = 750,
+                            easing = FastOutSlowInEasing,
+                        )
+                    },
+                    label = "poemPageRotation",
+                ) { state ->
+                    when (state) {
+                        EnterExitState.PreEnter -> 90f
+                        EnterExitState.Visible -> 0f
+                        EnterExitState.PostExit -> 90f
+                    }
+                }
+                rotation
+            }
+        } else {
+            0f
+        }
+    Column(
+        Modifier
+            .fillMaxSize()
+            .graphicsLayer {
+                rotationY = pageRotation
+                transformOrigin = TransformOrigin(1f, 0.5f)
+                cameraDistance = 12f * density
+            },
+    ) {
         Row(
             Modifier
                 .fillMaxWidth()
@@ -463,7 +549,7 @@ fun PoemDetailsScreen(
                     painter = painterResource(R.drawable.back_button),
                     contentDescription = stringResource(R.string.back),
                     modifier = Modifier.size(24.dp),
-                    tint = Color.Black,
+                    tint = MaterialTheme.colorScheme.onBackground,
                 )
             }
             Spacer(Modifier.weight(1f))
@@ -472,7 +558,8 @@ fun PoemDetailsScreen(
                 modifier = Modifier
                     .size(48.dp)
                     .background(
-                        if (poem.isFavorite) Color.Black else Color.Transparent,
+                        if (poem.isFavorite) MaterialTheme.colorScheme.primary
+                        else Color.Transparent,
                         RoundedCornerShape(50),
                     ),
             ) {
@@ -480,18 +567,23 @@ fun PoemDetailsScreen(
                     painter = painterResource(R.drawable.favorites_button),
                     contentDescription = stringResource(R.string.favorite),
                     modifier = Modifier.size(24.dp),
-                    tint = if (poem.isFavorite) Color.White else Color.Black,
+                    tint =
+                        if (poem.isFavorite) MaterialTheme.colorScheme.onPrimary
+                        else MaterialTheme.colorScheme.onBackground,
                 )
             }
             IconButton(
-                onClick = onEdit,
+                onClick = {
+                    animatePage = false
+                    onEdit()
+                },
                 modifier = Modifier.size(48.dp),
             ) {
                 Icon(
                     painter = painterResource(R.drawable.edit_button),
                     contentDescription = stringResource(R.string.edit),
                     modifier = Modifier.size(24.dp),
-                    tint = Color.Black,
+                    tint = MaterialTheme.colorScheme.onBackground,
                 )
             }
             IconButton(
@@ -502,7 +594,7 @@ fun PoemDetailsScreen(
                     painter = painterResource(R.drawable.delete_button),
                     contentDescription = stringResource(R.string.delete),
                     modifier = Modifier.size(24.dp),
-                    tint = Color.Black,
+                    tint = MaterialTheme.colorScheme.onBackground,
                 )
             }
         }
@@ -512,7 +604,9 @@ fun PoemDetailsScreen(
                 .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 24.dp)
         ) {
             Card(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .darkThemeOutline(RoundedCornerShape(32.dp)),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.background,
                     contentColor = MaterialTheme.colorScheme.onBackground,
@@ -603,9 +697,9 @@ fun PoemEditorScreen(
     val fieldShape = RoundedCornerShape(32.dp)
     val fieldTextStyle = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.textSp)
     val fieldColors = TextFieldDefaults.colors(
-        focusedContainerColor = Color.White,
-        unfocusedContainerColor = Color.White,
-        errorContainerColor = Color.White,
+        focusedContainerColor = MaterialTheme.colorScheme.surface,
+        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+        errorContainerColor = MaterialTheme.colorScheme.surface,
         focusedIndicatorColor = Color.Transparent,
         unfocusedIndicatorColor = Color.Transparent,
         errorIndicatorColor = Color.Transparent,
@@ -621,7 +715,7 @@ fun PoemEditorScreen(
                     painter = painterResource(R.drawable.back_button),
                     contentDescription = stringResource(R.string.back),
                     modifier = Modifier.size(24.dp),
-                    tint = Color.Black,
+                    tint = MaterialTheme.colorScheme.onBackground,
                 )
             }
             Text(
@@ -659,7 +753,8 @@ fun PoemEditorScreen(
         Column(
             Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 16.dp),
+                .navigationBarsPadding()
+                .padding(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 6.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             TextField(
@@ -675,7 +770,8 @@ fun PoemEditorScreen(
                 } else null,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .shadow(8.dp, fieldShape),
+                    .shadow(8.dp, fieldShape)
+                    .darkThemeOutline(fieldShape),
                 singleLine = true,
                 isError = attempted && title.isBlank(),
                 shape = fieldShape,
@@ -695,7 +791,8 @@ fun PoemEditorScreen(
                 } else null,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .shadow(8.dp, fieldShape),
+                    .shadow(8.dp, fieldShape)
+                    .darkThemeOutline(fieldShape),
                 singleLine = true,
                 isError = attempted && author.isBlank(),
                 shape = fieldShape,
@@ -715,7 +812,8 @@ fun PoemEditorScreen(
                 } else null,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .shadow(8.dp, fieldShape),
+                    .shadow(8.dp, fieldShape)
+                    .darkThemeOutline(fieldShape),
                 singleLine = true,
                 shape = fieldShape,
                 textStyle = fieldTextStyle,
@@ -732,7 +830,8 @@ fun PoemEditorScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .shadow(8.dp, fieldShape),
+                    .shadow(8.dp, fieldShape)
+                    .darkThemeOutline(fieldShape),
                 isError = attempted && content.isBlank(),
                 placeholder = { Text(stringResource(R.string.poem_hint)) },
                 shape = fieldShape,
@@ -867,7 +966,10 @@ private fun PoemDetailsScreenPreview() {
 @Composable
 private fun ProfileScreenPreview() {
     VersekeepTheme {
-        ProfileScreen()
+        ProfileScreen(
+            darkTheme = false,
+            onDarkThemeChange = {},
+        )
     }
 }
 

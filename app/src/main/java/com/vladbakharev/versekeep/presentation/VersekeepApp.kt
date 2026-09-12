@@ -4,6 +4,7 @@ import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -67,6 +68,8 @@ private data class BottomNavItem(
 fun VersekeepApp(
     navController: NavHostController,
     viewModel: VersekeepViewModel,
+    darkTheme: Boolean,
+    onDarkThemeChange: (Boolean) -> Unit,
 ) {
     val poems by viewModel.poems.collectAsStateWithLifecycle()
     val filtered by viewModel.filteredPoems.collectAsStateWithLifecycle()
@@ -92,7 +95,18 @@ fun VersekeepApp(
                         .fillMaxWidth()
                         .navigationBarsPadding()
                         .padding(horizontal = 32.dp, vertical = 6.dp)
-                        .shadow(8.dp, RoundedCornerShape(32.dp), clip = false),
+                        .shadow(8.dp, RoundedCornerShape(32.dp), clip = false)
+                        .then(
+                            if (darkTheme) {
+                                Modifier.border(
+                                    0.5.dp,
+                                    MaterialTheme.colorScheme.outline,
+                                    RoundedCornerShape(32.dp),
+                                )
+                            } else {
+                                Modifier
+                            },
+                        ),
                     shape = RoundedCornerShape(32.dp),
                     color = MaterialTheme.colorScheme.surface,
                 ) {
@@ -128,8 +142,8 @@ fun VersekeepApp(
                             val route = item.route
                             val selected = currentRoute == route
                             val contentColor =
-                                if (selected) MaterialTheme.colorScheme.surface
-                                else Color.Black
+                                if (selected) MaterialTheme.colorScheme.onPrimary
+                                else MaterialTheme.colorScheme.onSurface
                             Column(
                                 modifier = Modifier
                                     .weight(1f)
@@ -137,7 +151,7 @@ fun VersekeepApp(
                                     .padding(horizontal = 4.dp, vertical = 4.dp)
                                     .clip(RoundedCornerShape(32.dp))
                                     .background(
-                                    if (selected) Color.Black
+                                    if (selected) MaterialTheme.colorScheme.primary
                                         else Color.Transparent,
                                     )
                                     .clickable { navigateToRoot(route) },
@@ -168,10 +182,14 @@ fun VersekeepApp(
                     onClick = { navController.navigate(Screen.editor()) },
                     modifier = Modifier
                         .padding(end = 8.dp)
-                        .border(0.5.dp, Color.White, RoundedCornerShape(32.dp)),
+                        .border(
+                            0.5.dp,
+                            MaterialTheme.colorScheme.onPrimary,
+                            RoundedCornerShape(32.dp),
+                        ),
                     shape = RoundedCornerShape(32.dp),
-                    containerColor = Color.Black,
-                    contentColor = Color.White,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
                     elevation = FloatingActionButtonDefaults.elevation(
                         defaultElevation = 8.dp,
                         pressedElevation = 8.dp,
@@ -216,6 +234,10 @@ fun VersekeepApp(
                                 else AnimatedContentTransitionScope.SlideDirection.Right,
                             animationSpec = tween(300),
                         )
+                    } else if (
+                        from >= 0 && targetState.destination.route == Screen.DETAILS
+                    ) {
+                        fadeOut(animationSpec = tween(120))
                     } else {
                         ExitTransition.None
                     }
@@ -272,7 +294,10 @@ fun VersekeepApp(
                     )
                 }
                 composable(Screen.PROFILE) {
-                    ProfileScreen()
+                    ProfileScreen(
+                        darkTheme = darkTheme,
+                        onDarkThemeChange = onDarkThemeChange,
+                    )
                 }
                 composable(
                     route = Screen.DETAILS,
@@ -282,6 +307,7 @@ fun VersekeepApp(
                     poems.firstOrNull { it.id == poemId }?.let { poem ->
                         PoemDetailsScreen(
                             poem = poem,
+                            animatedVisibilityScope = this,
                             onBack = { navController.popBackStack() },
                             onEdit = { navController.navigate(Screen.editor(poem.id)) },
                             onFavorite = { viewModel.toggleFavorite(poem.id) },
